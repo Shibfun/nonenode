@@ -18,7 +18,7 @@
             background-size: cover;
             position: relative;
             color: #fff;
-            line-height: 1.4;
+            line-height: 1.6;
             overflow-x: hidden;
             display: flex;
             flex-direction: column;
@@ -136,12 +136,13 @@
             padding: 15px;
             border-radius: 15px;
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
-            text-align: center;
+            text-align: left;
         }
         .section-title {
             font-size: 1.1em;
             color: #F4A261;
             margin-bottom: 10px;
+            text-align: center;
         }
         .button-group {
             display: flex;
@@ -172,13 +173,18 @@
             padding: 10px;
             border-radius: 10px;
             margin-top: 10px;
-            font-size: 0.8em;
-            color: #fff;
-        }
-        .status {
-            margin-top: 10px;
             font-size: 0.9em;
-            color: #F4A261;
+            color: #fff;
+            line-height: 1.8;
+        }
+        .info-panel ul {
+            list-style: none;
+            padding: 0;
+        }
+        .info-panel li {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 0;
         }
         .leaderboard {
             margin-top: 15px;
@@ -198,6 +204,9 @@
             background: rgba(244, 162, 97, 0.3);
             font-weight: bold;
         }
+        .leaderboard-item.top-1 { background: #FFD700; color: #000; }
+        .leaderboard-item.top-2 { background: #C0C0C0; color: #000; }
+        .leaderboard-item.top-3 { background: #CD7F32; color: #000; }
         .modal {
             display: none;
             position: fixed;
@@ -245,6 +254,7 @@
             .avatar { width: 20px; height: 20px; }
             .nickname { font-size: 0.9em; }
             .v-icon { width: 14px; height: 14px; }
+            .info-panel { font-size: 0.8em; }
         }
     </style>
 </head>
@@ -265,12 +275,12 @@
                 <img class="v-icon" id="vIcon" src="" alt="" style="display: none;">
             </div>
             <div class="miner-gif"></div>
-            <div class="miner-prompt" id="minerPrompt"></div>
+            <div class="miner-prompt" id="minerPrompt">Launching to NONE mines! Hurry, hurry! 🚀</div>
         </div>
     </div>
     <div class="container">
         <div class="section">
-            <div class="section-title" id="connectTitle">Connect Wallet</div>
+            <div class="section-title">Connect Wallet</div>
             <div class="button-group">
                 <button id="connectButton">Connect MetaMask</button>
             </div>
@@ -278,7 +288,14 @@
         </div>
         <div class="section" id="myStakeSection">
             <div class="section-title">My Stake</div>
-            <div class="info-panel" id="myStakeInfo">You haven't staked yet.</div>
+            <div class="info-panel">
+                <ul id="myStakeInfo">
+                    <li><span>Node ID:</span> <span>-</</span></li>
+                    <li><span>Staked:</span> <span>0.00 NONE</span></li>
+                    <li><span>Stake Reward:</span> <span>0.00 NONE</span></li>
+                    <li><span>Node Reward:</span> <span>0.00 NONE</span></li>
+                </ul>
+            </div>
         </div>
         <div class="section">
             <div class="section-title">Node Leaderboard by Stake Amount</div>
@@ -347,7 +364,12 @@
 
         async function updateMyStake() {
             if (!web3 || !contract || !accounts) {
-                document.getElementById('myStakeInfo').innerText = "You haven't staked yet.";
+                document.getElementById('myStakeInfo').innerHTML = `
+                    <li><span>Node ID:</span> <span>-</span></li>
+                    <li><span>Staked:</span> <span>0.00 NONE</span></li>
+                    <li><span>Stake Reward:</span> <span>0.00 NONE</span></li>
+                    <li><span>Node Reward:</span> <span>0.00 NONE</span></li>
+                `;
                 return;
             }
             try {
@@ -356,14 +378,20 @@
                 const nodeId = stakeInfo[1];
                 const stakeReward = web3.utils.fromWei(stakeInfo[3], 'ether');
                 const nodeReward = web3.utils.fromWei(stakeInfo[4], 'ether');
-                if (parseFloat(amount) > 0) {
-                    document.getElementById('myStakeInfo').innerText = `Node ID: ${nodeId}\nStaked: ${parseFloat(amount).toFixed(2)} NONE\nStake Reward: ${parseFloat(stakeReward).toFixed(2)} NONE\nNode Reward: ${parseFloat(nodeReward).toFixed(2)} NONE`;
-                } else {
-                    document.getElementById('myStakeInfo').innerText = "You haven't staked yet.";
-                }
+                document.getElementById('myStakeInfo').innerHTML = `
+                    <li><span>Node ID:</span> <span>${nodeId || '-'}</span></li>
+                    <li><span>Staked:</span> <span>${parseFloat(amount).toFixed(2)} NONE</span></li>
+                    <li><span>Stake Reward:</span> <span>${parseFloat(stakeReward).toFixed(2)} NONE</span></li>
+                    <li><span>Node Reward:</span> <span>${parseFloat(nodeReward).toFixed(2)} NONE</span></li>
+                `;
             } catch (error) {
                 console.error("Error updating my stake:", error);
-                document.getElementById('myStakeInfo').innerText = "Error fetching stake info.";
+                document.getElementById('myStakeInfo').innerHTML = `
+                    <li><span>Node ID:</span> <span>-</span></li>
+                    <li><span>Staked:</span> <span>0.00 NONE</span></li>
+                    <li><span>Stake Reward:</span> <span>0.00 NONE</span></li>
+                    <li><span>Node Reward:</span> <span>0.00 NONE</span></li>
+                `;
             }
         }
 
@@ -383,8 +411,8 @@
                         const nodeAddress = await contract.methods.nodeAddresses(i).call();
                         const stakes = await contract.methods.getNodeStakes(i + 1).call();
                         const totalStaked = web3.utils.fromWei(stakes, 'ether');
-                        const nodeRewardInfo = await contract.methods.getRewardInfo(nodeAddress).call();
-                        const nodeReward = web3.utils.fromWei(nodeRewardInfo[0], 'ether'); // perBlock reward
+                        const rewardInfo = await contract.methods.getRewardInfo(nodeAddress).call();
+                        const nodeReward = web3.utils.fromWei(rewardInfo[0], 'ether'); // perBlock reward
                         if (parseFloat(totalStaked) > 0) {
                             nodes.push({
                                 nodeId: i + 1,
@@ -424,12 +452,17 @@
                     }
                 }
 
-                // Then, display the leaderboard
+                // Then, display the leaderboard with top 3 emojis
                 nodes.forEach((node, index) => {
                     if (!userNodeDisplayed || node.nodeId != userNodeId) {
+                        let rankClass = '';
+                        let rankEmoji = '';
+                        if (index === 0 && !userNodeDisplayed) rankClass = 'top-1', rankEmoji = '🥇';
+                        else if (index === 1 && !userNodeDisplayed) rankClass = 'top-2', rankEmoji = '🥈';
+                        else if (index === 2 && !userNodeDisplayed) rankClass = 'top-3', rankEmoji = '🥉';
                         leaderboardHTML += `
-                            <div class="leaderboard-item">
-                                <span>#${index + 1} Node ID: ${node.nodeId}</span>
+                            <div class="leaderboard-item ${rankClass}">
+                                <span>${rankEmoji} #${index + 1} Node ID: ${node.nodeId}</span>
                                 <span>${node.totalStaked.toFixed(2)} NONE (Reward: ${node.nodeReward.toFixed(2)} NONE/block)</span>
                             </div>`;
                     }
