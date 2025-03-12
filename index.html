@@ -192,9 +192,7 @@
             overflow-y: auto;
         }
         .leaderboard-item {
-            display: flex;
-            justify-content: space-between;
-            padding: 8px 10px;
+            padding: 10px;
             background: rgba(255, 255, 255, 0.1);
             margin-bottom: 5px;
             border-radius: 10px;
@@ -207,6 +205,16 @@
         .leaderboard-item.top-1 { background: #FFD700; color: #000; }
         .leaderboard-item.top-2 { background: #C0C0C0; color: #000; }
         .leaderboard-item.top-3 { background: #CD7F32; color: #000; }
+        .leaderboard-item .main-info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+        }
+        .leaderboard-item .reward-info {
+            font-size: 0.85em;
+            color: #A8B5D4;
+            margin-left: 5px;
+        }
         .modal {
             display: none;
             position: fixed;
@@ -290,7 +298,7 @@
             <div class="section-title">My Stake</div>
             <div class="info-panel">
                 <ul id="myStakeInfo">
-                    <li><span>Node ID:</span> <span>-</</span></li>
+                    <li><span>Node ID:</span> <span>-</span></li>
                     <li><span>Staked:</span> <span>0.00 NONE</span></li>
                     <li><span>Stake Reward:</span> <span>0.00 NONE</span></li>
                     <li><span>Node Reward:</span> <span>0.00 NONE</span></li>
@@ -445,8 +453,11 @@
                     if (userNode) {
                         leaderboardHTML += `
                             <div class="leaderboard-item highlighted">
-                                <span>My Node (ID: ${userNode.nodeId})</span>
-                                <span>${userNode.totalStaked.toFixed(2)} NONE (Reward: ${userNode.nodeReward.toFixed(2)} NONE/block)</span>
+                                <div class="main-info">
+                                    <span>My Node (ID: ${userNode.nodeId})</span>
+                                    <span>${userNode.totalStaked.toFixed(2)} NONE</span>
+                                </div>
+                                <div class="reward-info">Reward: ${userNode.nodeReward.toFixed(2)} NONE/block</div>
                             </div>`;
                         userNodeDisplayed = true;
                     }
@@ -462,8 +473,11 @@
                         else if (index === 2 && !userNodeDisplayed) rankClass = 'top-3', rankEmoji = '🥉';
                         leaderboardHTML += `
                             <div class="leaderboard-item ${rankClass}">
-                                <span>${rankEmoji} #${index + 1} Node ID: ${node.nodeId}</span>
-                                <span>${node.totalStaked.toFixed(2)} NONE (Reward: ${node.nodeReward.toFixed(2)} NONE/block)</span>
+                                <div class="main-info">
+                                    <span>${rankEmoji} #${index + 1} Node ID: ${node.nodeId}</span>
+                                    <span>${node.totalStaked.toFixed(2)} NONE</span>
+                                </div>
+                                <div class="reward-info">Reward: ${node.nodeReward.toFixed(2)} NONE/block</div>
                             </div>`;
                     }
                 });
