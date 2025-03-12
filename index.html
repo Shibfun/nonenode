@@ -308,7 +308,6 @@
         <div class="section">
             <div class="section-title">Node Leaderboard by Stake Amount</div>
             <div class="leaderboard" id="leaderboard">
-                <!-- Leaderboard items will be dynamically added here -->
             </div>
         </div>
     </div>
@@ -331,7 +330,6 @@
             rpcUrls: ['https://www.shibrpc.com'],
             blockExplorerUrls: ['https://shibariumscan.io']
         };
-
         const prompts = [
             "⛏️ Miner, ready your pickaxe! Let’s dig some NONE!",
             "💎 Found any NONE yet? Keep digging, champ!",
@@ -345,21 +343,17 @@
             "🎉 Party in the mines! Dig NONE now!"
         ];
         let promptIndex = 0;
-
         function showModal(message) {
             document.getElementById('modalMessage').innerText = message;
             document.getElementById('modal').style.display = 'flex';
         }
-
         function closeModal() {
             document.getElementById('modal').style.display = 'none';
         }
-
         function updatePrompt() {
             document.getElementById('minerPrompt').innerText = prompts[promptIndex];
             promptIndex = (promptIndex + 1) % prompts.length;
         }
-
         async function updateNoneBalance() {
             if (!web3 || !contract || !accounts) return;
             try {
@@ -369,7 +363,6 @@
                 console.error("Error updating NONE balance:", error);
             }
         }
-
         async function updateMyStake() {
             if (!web3 || !contract || !accounts) {
                 document.getElementById('myStakeInfo').innerHTML = `
@@ -402,7 +395,6 @@
                 `;
             }
         }
-
         async function updateLeaderboard() {
             if (!web3 || !contract || !accounts) {
                 document.getElementById('leaderboard').innerHTML = '<div class="leaderboard-item">Connect wallet to view leaderboard.</div>';
@@ -410,17 +402,15 @@
             }
             try {
                 const nodeCount = await contract.methods.nodeCount().call();
-                const maxNodes = Math.min(nodeCount, 2100); // MAX_NODES from contract is 2100
+                const maxNodes = Math.min(nodeCount, 2100);
                 let nodes = [];
-                
-                // Fetch node stakes and rewards for all nodes
                 for (let i = 0; i < maxNodes; i++) {
                     try {
                         const nodeAddress = await contract.methods.nodeAddresses(i).call();
                         const stakes = await contract.methods.getNodeStakes(i + 1).call();
                         const totalStaked = web3.utils.fromWei(stakes, 'ether');
                         const rewardInfo = await contract.methods.getRewardInfo(nodeAddress).call();
-                        const nodeReward = web3.utils.fromWei(rewardInfo[0], 'ether'); // perBlock reward
+                        const nodeReward = web3.utils.fromWei(rewardInfo[0], 'ether');
                         if (parseFloat(totalStaked) > 0) {
                             nodes.push({
                                 nodeId: i + 1,
@@ -432,63 +422,36 @@
                         console.error(`Error fetching data for node ${i + 1}:`, error);
                     }
                 }
-
-                // Sort nodes by total staked amount (descending)
                 nodes.sort((a, b) => b.totalStaked - a.totalStaked);
-
-                // Get user's node ID
                 let userNodeId = null;
                 const stakeInfo = await contract.methods.getStakeInfo(accounts[0]).call();
                 if (parseFloat(web3.utils.fromWei(stakeInfo[0], 'ether')) > 0) {
                     userNodeId = stakeInfo[1];
                 }
-
-                // Build leaderboard HTML
                 let leaderboardHTML = '';
-                let userNodeDisplayed = false;
-
-                // First, display user's node at the top if they have staked
-                if (userNodeId) {
-                    const userNode = nodes.find(node => node.nodeId == userNodeId);
-                    if (userNode) {
-                        leaderboardHTML += `
-                            <div class="leaderboard-item highlighted">
-                                <div class="main-info">
-                                    <span>My Node (ID: ${userNode.nodeId})</span>
-                                    <span>${userNode.totalStaked.toFixed(2)} NONE</span>
-                                </div>
-                                <div class="reward-info">Reward: ${userNode.nodeReward.toFixed(2)} NONE/block</div>
-                            </div>`;
-                        userNodeDisplayed = true;
-                    }
-                }
-
-                // Then, display the leaderboard with top 3 emojis
                 nodes.forEach((node, index) => {
-                    if (!userNodeDisplayed || node.nodeId != userNodeId) {
-                        let rankClass = '';
-                        let rankEmoji = '';
-                        if (index === 0 && !userNodeDisplayed) rankClass = 'top-1', rankEmoji = '🥇';
-                        else if (index === 1 && !userNodeDisplayed) rankClass = 'top-2', rankEmoji = '🥈';
-                        else if (index === 2 && !userNodeDisplayed) rankClass = 'top-3', rankEmoji = '🥉';
-                        leaderboardHTML += `
-                            <div class="leaderboard-item ${rankClass}">
-                                <div class="main-info">
-                                    <span>${rankEmoji} #${index + 1} Node ID: ${node.nodeId}</span>
-                                    <span>${node.totalStaked.toFixed(2)} NONE</span>
-                                </div>
-                                <div class="reward-info">Reward: ${node.nodeReward.toFixed(2)} NONE/block</div>
-                            </div>`;
-                    }
+                    let rankClass = '';
+                    let rankEmoji = '';
+                    if (index === 0) rankClass = 'top-1', rankEmoji = '🥇';
+                    else if (index === 1) rankClass = 'top-2', rankEmoji = '🥈';
+                    else if (index === 2) rankClass = 'top-3', rankEmoji = '🥉';
+                    const isUserNode = userNodeId && node.nodeId == userNodeId;
+                    const highlightClass = isUserNode ? 'highlighted' : '';
+                    leaderboardHTML += `
+                        <div class="leaderboard-item ${rankClass} ${highlightClass}">
+                            <div class="main-info">
+                                <span>${rankEmoji} #${index + 1} Node ID: ${node.nodeId}</span>
+                                <span>${node.totalStaked.toFixed(2)} NONE</span>
+                            </div>
+                            <div class="reward-info">Reward: ${node.nodeReward.toFixed(2)} NONE/block</div>
+                        </div>`;
                 });
-
                 document.getElementById('leaderboard').innerHTML = leaderboardHTML || '<div class="leaderboard-item">No nodes with stakes found.</div>';
             } catch (error) {
                 console.error("Error updating leaderboard:", error);
                 document.getElementById('leaderboard').innerHTML = '<div class="leaderboard-item">Error loading leaderboard.</div>';
             }
         }
-
         async function connectWallet() {
             const connectButton = document.getElementById('connectButton');
             try {
@@ -534,14 +497,11 @@
                 connectButton.classList.remove('loading');
             }
         }
-
         setInterval(updatePrompt, 3000);
         setInterval(updateNoneBalance, 5000);
         setInterval(updateMyStake, 5000);
         setInterval(updateLeaderboard, 10000);
-
         document.getElementById('connectButton').addEventListener('click', connectWallet);
-
         window.ethereum?.on('chainChanged', (chainId) => {
             if (parseInt(chainId, 16) !== 109) {
                 showModal('Switched to wrong network. Please reconnect to Shibarium.');
@@ -553,7 +513,6 @@
                 connectWallet();
             }
         });
-
         window.ethereum?.on('accountsChanged', (newAccounts) => {
             if (newAccounts.length) {
                 connectWallet();
@@ -565,7 +524,6 @@
                 document.getElementById('walletAddress').innerText = 'Not Connected';
             }
         });
-
         window.addEventListener('load', () => {
             if (!window.location.protocol.startsWith('http')) {
                 showModal('Run this page on a local server (e.g., "npx serve") to connect with MetaMask.');
