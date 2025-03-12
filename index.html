@@ -193,11 +193,11 @@
         }
         .leaderboard-item {
             padding: 10px;
-            background: rgba(255, 255, 255, 0.1);
+            background: #FFFFFF;
             margin-bottom: 5px;
             border-radius: 10px;
             font-size: 0.9em;
-            color: #333; /* Darker text for readability */
+            color: #333;
         }
         .leaderboard-item.highlighted {
             background: rgba(244, 162, 97, 0.3);
@@ -213,7 +213,7 @@
         }
         .leaderboard-item .reward-info {
             font-size: 0.85em;
-            color: #333; /* Darker text for reward info */
+            color: #333;
             margin-left: 5px;
         }
         .modal {
@@ -416,7 +416,7 @@
                             nodes.push({
                                 nodeId: i + 1,
                                 totalStaked: parseFloat(totalStaked),
-                                nodeReward: parseFloat(nodeReward) || 90.00 // Default to 90.00 if reward is 0 (temporary fix)
+                                nodeReward: parseFloat(nodeReward) || 90.00
                             });
                         }
                     } catch (error) {
